@@ -4,10 +4,11 @@ use std::io::{self, Write};
 mod executable_cmd;
 mod type_cmd;
 mod pwd_cmd;
+mod cd_cmd;
 
 fn main() {
     // moving this outside to avoid re-allocating every iteration
-    let mut input = String::new();
+    let mut input: String = String::new();
 
     loop {
         print!("$ ");
@@ -33,7 +34,10 @@ fn main() {
             },
             "pwd" => {
                 let cwd = pwd_cmd::get_pwd();
-                println!("{}", cwd);
+                println!("{}", cwd.into_os_string().into_string().unwrap());
+            },
+            "cd" => {
+                cd_cmd::change_directory(&args.join(" "));
             }
             _ => {
                 if type_cmd::get_executable(cmd).is_some() {
