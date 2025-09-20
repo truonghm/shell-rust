@@ -26,7 +26,7 @@ cd shell-rust && cargo run
 ```
 
 ## Roadmap
-- [x] 
+
 - [x] REPL  
 - [x] Builtin: echo, type, exit  
 - [x] Running external programs (using PATH)  
