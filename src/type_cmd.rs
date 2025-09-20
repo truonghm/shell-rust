@@ -10,22 +10,30 @@ pub fn check_type(command: &str) {
 		let cmd = cmd.trim();
 		if BUILTIN_COMMANDS.contains(&cmd) {
 			println!("{} is a shell builtin", cmd);
-		} else {
-			let path = env::var("PATH").expect("PATH must be set");
-			for path_elem in path.split(":") {
-				let file_path_str = &format!("{}/{}", path_elem, cmd);
-				let file_path = Path::new(file_path_str);
-				if file_path.exists() {
-					if let Ok(metadata) = fs::metadata(file_path) {
-						let permissions = metadata.permissions();
-						if permissions.mode() & 0o111 != 0 {
-							println!("{} is {}", cmd, file_path_str);
-							return;
-						}
-					}
+			return;
+		}
+		if let Some(ext_path) = get_executable(cmd) {
+			println!("{} is {}", cmd, ext_path);
+			return;
+		}
+		println!("{}: not found", cmd);
+	}
+}
+
+pub fn get_executable(cmd: &str) -> Option<String> {
+	let path = env::var("PATH").expect("PATH must be set");
+	for path_elem in path.split(":") {
+		let file_path_str = &format!("{}/{}", path_elem, cmd);
+		let file_path = Path::new(file_path_str);
+		if file_path.exists() {
+			if let Ok(metadata) = fs::metadata(file_path) {
+				let permissions = metadata.permissions();
+				if permissions.mode() & 0o111 != 0 {
+					return Some(file_path_str.to_string());
 				}
 			}
-			println!("{}: not found", cmd);
 		}
 	}
+
+	return None;
 }
