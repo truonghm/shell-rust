@@ -26,15 +26,15 @@ cd shell-rust && cargo run
 ```
 
 ## Roadmap
-
-[X] REPL
-[X] Builtin: echo, type, exit
-[X] Running external programs (using PATH)
-[X] pwd, cd
-[ ] Quoting: single quotes, double quotes, backslash
-[ ] Redirection: stdout, stderr
-[ ] Autocompletion: builtin, with arguments, etc.
-[ ] Pipelines
-[ ] History: listing history, up/down navigation, execution
-[ ] Persisting history: read/write from file, append to file, modify history on exit
-[ ] Parse tree
+- [x] 
+- [x] REPL  
+- [x] Builtin: echo, type, exit  
+- [x] Running external programs (using PATH)  
+- [x] pwd, cd  
+- [ ] Quoting: single quotes, double quotes, backslash  
+- [ ] Redirection: stdout, stderr  
+- [ ] Autocompletion: builtin, with arguments, etc.  
+- [ ] Pipelines  
+- [ ] History: listing history, up/down navigation, execution  
+- [ ] Persisting history: read/write from file, append to file, modify history on exit  
+- [ ] Parse tree  
