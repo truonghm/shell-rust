@@ -1,35 +1,40 @@
-[![progress-banner](https://backend.codecrafters.io/progress/shell/6a0e45d6-e12c-4bb0-a34a-b2d6a737483d)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# Rust Implementation of the shell
 
-This is a starting point for Rust solutions to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+## Set up and run
+### Install Rust
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+Install Rust
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# Passing the first stage
+Add it to your path
 
-The entry point for your `shell` implementation is in `src/main.rs`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+    PATH=$PATH:$HOME/.cargo/bin
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+### Compile and run the shell
+
+clone this repository,
+
+```shell
+git clone https://github.com/truonghm/shell-rust.git
 ```
 
-Time to move on to the next stage!
+and run
 
-# Stage 2 & beyond
+```shell
+cd shell-rust && cargo run
+```
 
-Note: This section is for stages 2 and beyond.
+## Roadmap
 
-1. Ensure you have `cargo (1.87)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.rs`. This command compiles your Rust project, so it might be slow
-   the first time you run it. Subsequent runs will be fast.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+[X] REPL
+[X] Builtin: echo, type, exit
+[X] Running external programs (using PATH)
+[X] pwd, cd
+[ ] Quoting: single quotes, double quotes, backslash
+[ ] Redirection: stdout, stderr
+[ ] Autocompletion: builtin, with arguments, etc.
+[ ] Pipelines
+[ ] History: listing history, up/down navigation, execution
+[ ] Persisting history: read/write from file, append to file, modify history on exit
+[ ] Parse tree

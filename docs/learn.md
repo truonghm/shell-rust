@@ -400,6 +400,171 @@ eprintln!("DEBUG: Full PATH = {}", path);
 println!("{} is {}", cmd, file_path_str);  // This is for actual output
 ```
 
+## Path Operations & Directory Management
+
+**Getting current working directory:**
+```rust
+use std::env;
+
+// Returns Result<PathBuf, io::Error>
+let current_dir = env::current_dir()?;
+```
+
+**Changing directory:**
+```rust
+use std::env;
+
+// Basic usage - returns Result<(), io::Error>
+env::set_current_dir("/path/to/directory")?;
+
+// With error handling
+match env::set_current_dir("/home/user") {
+    Ok(()) => println!("Directory changed successfully"),
+    Err(e) => println!("Failed to change directory: {}", e),
+}
+```
+
+**Important limitations:**
+- `set_current_dir()` does NOT handle shell expansions like `~` or `$HOME`
+- You must expand these manually before calling the function
+- It only accepts literal paths, not shell patterns
+
+**PathBuf vs Path (Ownership patterns):**
+```rust
+// PathBuf - owned (like String)
+let mut path_buf = PathBuf::from("/home/user");
+path_buf.push("documents");  // Can modify
+
+// Path - borrowed (like &str)  
+let path: &Path = Path::new("/home/user/file.txt");
+// path.push("something"); // Won't compile - can't modify
+
+// PathBuf derefs to &Path automatically
+let path_buf = PathBuf::from("/home");
+let path_ref: &Path = &path_buf;  // Automatic conversion
+```
+
+**Key relationship:** PathBuf:Path :: String:&str
+
+## Variable Declaration & Scope
+
+**const vs let vs static:**
+```rust
+// const - compile-time constants, can be anywhere
+const MAX_SIZE: usize = 100;  // Known at compile time
+
+// let - local variables, function scope only
+fn main() {
+    let x = 5;              // Immutable
+    let mut y = 10;         // Mutable
+}
+
+// static - global variables, program lifetime
+static GLOBAL_VAR: usize = 42;  // Immutable global
+```
+
+**For mutable global state:**
+```rust
+use std::sync::Mutex;
+
+// Prefer thread-safe wrappers over static mut
+static GLOBAL_COUNTER: Mutex<i32> = Mutex::new(0);
+
+// Usage
+let mut counter = GLOBAL_COUNTER.lock().unwrap();
+*counter += 1;
+```
+
+**Scope rules:**
+- `const`: Can be declared anywhere, known at compile time
+- `let`: Local scope only (inside functions/blocks)
+- `static`: Global scope only (module level)
+
+## Advanced Error Handling & Closures
+
+**unwrap_or vs unwrap_or_else:**
+```rust
+// unwrap_or - always evaluates fallback
+let home = env::var("HOME").unwrap_or("/".to_string());
+
+// unwrap_or_else - only calls closure if needed (lazy)
+let home = env::var("HOME").unwrap_or_else(|_| "/".to_string());
+```
+
+**When to use each:**
+- `unwrap_or`: Simple default values
+- `unwrap_or_else`: Expensive operations you only want to run if needed
+
+**Closure syntax breakdown:**
+```rust
+|_| "/".to_string()
+// |_|  = function that ignores its parameter
+//      "/".to_string() = what it returns
+
+// Pattern: |parameters| return_value
+|| 42                    // No parameters
+|x| x + 1                // One parameter (used)
+|_| "default"            // One parameter (ignored)
+|x, y| x + y             // Two parameters
+```
+
+**Python comparison:**
+```rust
+// Rust closure
+|_| "/".to_string()
+
+// Python lambda  
+lambda _: "/"
+```
+
+## String Manipulation & Safety
+
+**Controlled replacements:**
+```rust
+// replacen - replace only N occurrences (safer)
+path.replacen("~", &home, 1)  // Replace only first occurrence
+
+// replace - replace ALL occurrences
+path.replace("~", &home)      // Replace every ~
+```
+
+**Why this matters:**
+- Path: `~/my~folder~with~tildes/file`
+- With `replace`: `/home/user/my/home/userfolder/home/userwith/home/usertildes/file` (wrong)
+- With `replacen`: `/home/user/my~folder~with~tildes/file` (correct)
+
+**Borrowing in method calls:**
+```rust
+let home = String::from("/home/user");
+
+path.replacen("~", &home, 1)  // Borrow (let method read it)
+path.replacen("~", home, 1)   // Move (give ownership away)
+```
+
+**Simple rule:** Use `&` when you want to "lend" data, not "give it away"
+
+## Shell vs OS Distinctions
+
+**Shell features that Rust doesn't handle automatically:**
+- Tilde expansion (`~` → `/home/user`)
+- Environment variable expansion (`$HOME` → `/home/user`)
+- Glob patterns (`*.txt` → list of files)
+- Command substitution (`` `date` `` → actual date)
+
+**Key insight:** When building a shell, YOU implement these features before making OS calls.
+
+```rust
+// Manual tilde expansion example
+fn expand_home(path: &str) -> String {
+    if path == "~" || path.starts_with("~/") {
+        let home = env::var("HOME").unwrap_or("/".to_string());
+        path.replacen("~", &home, 1)
+    } else {
+        path.to_string()
+    }
+}
+```
+
 ## Important Concepts
 
 1. **Ownership & Borrowing:** `&` creates a reference/borrow
@@ -417,6 +582,14 @@ println!("{} is {}", cmd, file_path_str);  // This is for actual output
 13. **Vec Bounds Checking:** Rust panics on out-of-bounds access, use `.get()` for safe access
 14. **Process Execution:** `std::process::Command` handles PATH lookup automatically
 15. **Error Propagation:** `?` operator passes errors up the call stack like re-raising exceptions
+16. **PathBuf vs Path:** PathBuf is owned (like String), Path is borrowed (like &str)
+17. **Variable Scope:** `const` = anywhere, `let` = local only, `static` = global only
+18. **Directory Operations:** `env::current_dir()` gets CWD, `env::set_current_dir()` changes it
+19. **Shell vs OS:** Rust doesn't handle shell expansions (~, $HOME) - you must implement them
+20. **Closure Syntax:** `|parameters| return_value` - anonymous functions, `|_|` ignores parameter
+21. **Lazy Evaluation:** `unwrap_or_else` only calls closure when needed, `unwrap_or` always evaluates
+22. **Controlled Replacement:** `replacen()` limits replacements, `replace()` changes all occurrences
+23. **Borrowing vs Moving:** Use `&variable` to lend data, `variable` to transfer ownership
 
 ## Best Practices
 
@@ -440,3 +613,10 @@ println!("{} is {}", cmd, file_path_str);  // This is for actual output
 - Use `?` operator for clean error propagation in functions returning Result
 - Use `unwrap()` only for prototyping, tests, or when absolutely certain of success
 - Prefer `if let Err(e) = result` for simple error handling patterns
+- Use `PathBuf` when you need to build/modify paths, `&Path` for function parameters
+- Prefer `let mut` for local mutable variables over global `static mut`
+- Use `unwrap_or()` for simple defaults, `unwrap_or_else()` for expensive operations
+- Implement shell expansions manually before calling OS functions like `set_current_dir()`
+- Use `replacen()` instead of `replace()` when you only want to change specific occurrences
+- Always use `&` when passing owned data to methods that only need to read it
+- Understand the difference between shell features (expansions) and OS features (system calls)
