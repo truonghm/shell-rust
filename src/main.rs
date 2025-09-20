@@ -1,7 +1,8 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
 
-const BUILTIN_COMMANDS: [&str; 3] = ["echo", "exit", "type"];
+mod type_cmd;
+
 fn main() {
     while true {
         print!("$ ");
@@ -19,20 +20,9 @@ fn main() {
                 println!("{}", echo_text.trim());
             }
         } else if input.trim().starts_with("type") {
-            if let Some(cmd) = input.trim().strip_prefix("type") {
-                
-                let cmd = cmd.trim();
-                if BUILTIN_COMMANDS.contains(&cmd) {
-                    println!("{} is a shell builtin", cmd);
-                } else {
-                    println!("{}: not found", cmd);
-                }
-
-            }
-        }
-        else {
+            type_cmd::check_type(input.trim());
+        } else {
             println!("{}: command not found", input.trim());
         }
     }
-
 }
