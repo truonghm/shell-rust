@@ -3,7 +3,7 @@ use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 
-const BUILTIN_COMMANDS: [&str; 3] = ["echo", "exit", "type"];
+const BUILTIN_COMMANDS: [&str; 4] = ["echo", "exit", "type", "pwd"];
 
 pub fn check_type(command: &str) {
 	if let Some(cmd) = command.trim().strip_prefix("type") {

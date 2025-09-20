@@ -3,6 +3,7 @@ use std::io::{self, Write};
 
 mod executable_cmd;
 mod type_cmd;
+mod pwd_cmd;
 
 fn main() {
     // moving this outside to avoid re-allocating every iteration
@@ -30,6 +31,10 @@ fn main() {
             "type" => {
                 type_cmd::check_type(input.trim());
             },
+            "pwd" => {
+                let cwd = pwd_cmd::get_pwd();
+                println!("{}", cwd);
+            }
             _ => {
                 if type_cmd::get_executable(cmd).is_some() {
                     executable_cmd::run_executable(input.trim().to_string());
