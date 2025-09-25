@@ -31,7 +31,7 @@ cd shell-rust && cargo run
 - [x] Builtin: echo, type, exit  
 - [x] Running external programs (using PATH)  
 - [x] pwd, cd  
-- [ ] Quoting: single quotes, double quotes, backslash  
+- [x] Quoting: single quotes, double quotes, backslash  
 - [ ] Redirection: stdout, stderr  
 - [ ] Autocompletion: builtin, with arguments, etc.  
 - [ ] Pipelines  

@@ -565,6 +565,218 @@ fn expand_home(path: &str) -> String {
 }
 ```
 
+## Collection Types: Vec vs Slices
+
+**Vec<T> - Growable, owned collections:**
+```rust
+// Use when size changes at runtime
+let mut numbers = Vec::new();
+numbers.push(1);
+numbers.push(2);
+
+// Use when you own the data  
+fn get_tokens() -> Vec<String> {
+    vec!["hello".to_string(), "world".to_string()]
+}
+```
+
+**[T] (slice) - Views into existing data:**
+```rust
+// Use for function parameters (more flexible)
+fn process_items(items: &[i32]) {
+    // Works with both Vec and arrays
+}
+
+// Usage with both Vec and arrays
+let vec = vec![1, 2, 3];
+let array = [1, 2, 3];
+process_items(&vec);    // &Vec<i32> → &[i32]
+process_items(&array);  // &[i32; 3] → &[i32]
+```
+
+**Key rule:** Use borrowed slices (&[T]) for function parameters unless you need ownership.
+
+## String Types: String vs &str
+
+**String - Owned, growable text:**
+```rust
+// Use when building or modifying text
+let mut token = String::new();
+token.push_str("hello");
+token.push(' ');
+
+// Use when you own the data
+fn build_message() -> String {
+    format!("Hello, world!")
+}
+```
+
+**&str - Views into existing text:**  
+```rust
+// Use for function parameters
+fn process_text(text: &str) {
+    println!("{}", text);
+}
+
+// String literals are &str
+let greeting = "hello";  // Type: &str
+
+// Slicing creates &str
+let text = String::from("hello world");
+let slice = &text[0..5];  // Type: &str
+```
+
+**Rule of thumb:** Use &str for function parameters unless you need ownership.
+
+## Control Flow & Boolean Conditions
+
+**Boolean conditions in if statements:**
+```rust
+let boolean_val = true;
+
+// Idiomatic Rust
+if boolean_val {
+    // do something
+}
+
+// Redundant and not idiomatic
+if boolean_val == true {
+    // do something  
+}
+
+// For negation
+if !boolean_val {
+    // do something when false
+}
+```
+
+**Key difference from Python:** Rust won't auto-convert other types to bool - only actual `bool` values work.
+
+## Type Conversions & String Matching
+
+**Common type mismatch: &String vs &str**
+```rust
+let parts: Vec<String> = parse_args(input);
+let cmd = parts.get(0).unwrap();  // Returns &String
+
+// Won't compile: can't match &String against &str literals
+match cmd {
+    "exit" => { ... }  // ERROR: mismatched types
+}
+
+// Solutions:
+// Option 1: Convert to &str
+let cmd = parts.get(0).unwrap().as_str();
+match cmd {
+    "exit" => { ... }  // Now works
+}
+
+// Option 2: Use as_str() in match
+match cmd.as_str() {
+    "exit" => { ... }
+}
+```
+
+**Key insight:** String and &str are different types even though both represent text.
+
+## Move Semantics & Ownership in Collections
+
+**The "borrow of moved value" error:**
+```rust
+let mut current_token = String::new();
+let mut tokens = Vec::new();
+
+// This MOVES current_token into the vector
+tokens.push(current_token);
+// current_token can't be used anymore!
+
+// Solutions:
+// Option 1: Clone before pushing
+tokens.push(current_token.clone());
+current_token.clear();
+
+// Option 2: Take/replace (more efficient)
+tokens.push(std::mem::take(&mut current_token));
+
+// Option 3: Replace with new String
+tokens.push(std::mem::replace(&mut current_token, String::new()));
+```
+
+**Key concept:** `push()` takes ownership (moves) the value. Once moved, you need to give the variable a new value.
+
+## Iterator vs Collection Methods
+
+**Iterator methods don't work on Vec:**
+```rust
+// split_whitespace() returns an Iterator
+let mut iter = s.split_whitespace();
+let first = iter.next();        // Option<&str>
+let rest: Vec<_> = iter.collect();
+
+// parse_args() returns a Vec
+let args = parse_args(s);
+// args.next()     // ERROR: Vec doesn't have .next()
+// args.collect()  // ERROR: Vec doesn't have .collect()
+
+// Solutions for Vec:
+// Option 1: Index directly
+let first = args.get(0);    // Option<&String>
+let rest = &args[1..];      // slice of remaining
+
+// Option 2: Convert to iterator
+let mut iter = args.into_iter();  // consumes Vec
+let first = iter.next();          // Option<String>
+let rest: Vec<_> = iter.collect();
+```
+
+**Key insight:** Iterators are lazy and consumable. Vecs are concrete collections accessed by position.
+
+## Character Processing & Lookahead
+
+**Looking ahead in character iteration:**
+
+**Option 1: Peekable Iterator (most idiomatic)**
+```rust
+let mut chars = s.chars().peekable();
+while let Some(ch) = chars.next() {
+    match ch {
+        '\\' => {
+            if let Some(&next_ch) = chars.peek() {
+                match next_ch {
+                    '"' | '\\' => {
+                        chars.next(); // consume the next character
+                        current_token.push(next_ch);
+                    }
+                    _ => current_token.push(ch),
+                }
+            }
+        }
+        _ => current_token.push(ch),
+    }
+}
+```
+
+**Option 2: Collect to Vec first**
+```rust
+let chars: Vec<char> = s.chars().collect();
+for i in 0..chars.len() {
+    let ch = chars[i];
+    match ch {
+        '\\' => {
+            if i + 1 < chars.len() {
+                let next_ch = chars[i + 1];
+                // Process based on next_ch
+            }
+        }
+        _ => current_token.push(ch),
+    }
+}
+```
+
+**Trade-offs:**
+- Peekable: More memory efficient, idiomatic Rust
+- Vec indexing: Simpler logic, requires full string in memory
+
 ## Important Concepts
 
 1. **Ownership & Borrowing:** `&` creates a reference/borrow
@@ -590,6 +802,13 @@ fn expand_home(path: &str) -> String {
 21. **Lazy Evaluation:** `unwrap_or_else` only calls closure when needed, `unwrap_or` always evaluates
 22. **Controlled Replacement:** `replacen()` limits replacements, `replace()` changes all occurrences
 23. **Borrowing vs Moving:** Use `&variable` to lend data, `variable` to transfer ownership
+24. **Collection Ownership:** Vec<T> for owned, growable data; &[T] for borrowed views
+25. **String Ownership:** String for owned, mutable text; &str for borrowed text views  
+26. **Boolean Conditions:** `if boolean_val` is idiomatic, `if boolean_val == true` is redundant
+27. **Type Conversions:** Use `.as_str()` to convert &String to &str for pattern matching
+28. **Move Semantics:** Vec::push() moves values; use clone(), take(), or replace() to retain access
+29. **Iterator vs Vec:** Iterators have .next()/.collect(), Vecs use indexing or .into_iter()
+30. **Character Lookahead:** Use .peekable() for efficient lookahead, or Vec<char> for random access
 
 ## Best Practices
 
@@ -620,3 +839,11 @@ fn expand_home(path: &str) -> String {
 - Use `replacen()` instead of `replace()` when you only want to change specific occurrences
 - Always use `&` when passing owned data to methods that only need to read it
 - Understand the difference between shell features (expansions) and OS features (system calls)
+- Prefer &[T] over Vec<T> for function parameters (more flexible, accepts both arrays and Vecs)
+- Use &str for function parameters unless you need to own/modify the string
+- Write `if condition` instead of `if condition == true` for boolean checks
+- Use `.as_str()` when matching &String against string literals
+- Handle move semantics with `.clone()`, `std::mem::take()`, or `std::mem::replace()` as appropriate
+- Convert Vec to iterator with `.into_iter()` when you need iterator methods like `.next()`
+- Use `.peekable()` for character lookahead when processing text sequentially
+- Collect to Vec<char> only when you need random access to characters
