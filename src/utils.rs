@@ -10,7 +10,10 @@ pub fn parse_args(s: &str) -> Vec<String> {
 	let mut tokens: Vec<String> = Vec::new();
 	let mut is_escaped = false;
 
-	for ch in s.chars() {
+	let chars: Vec<char> = s.chars().collect();
+	// for ch in s.chars() {
+	for i in 0..chars.len() {
+		let ch = chars[i];
 		match ch {
 			'\'' => {
 				if !is_escaped {
@@ -54,6 +57,19 @@ pub fn parse_args(s: &str) -> Vec<String> {
 			}
 			'\\' => match quote_state {
 				QuoteState::None => is_escaped = true,
+				QuoteState::Double => if !is_escaped {
+					if i + 1 < chars.len() {
+						let next_ch = chars[i + 1];
+						if next_ch == '\\' || next_ch == '"' {
+							is_escaped = true;
+						} else {
+							current_token.push(ch);
+						}
+					}
+				} else {
+					current_token.push(ch);
+					is_escaped = false;
+				},
 				_ => current_token.push(ch),
 			},
 			_ => current_token.push(ch),
